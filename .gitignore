@@ -1,0 +1,31 @@
+# fetched sources, scratch, notes index
+.cache/
+
+# PDFs and other downloaded binaries: recoverable from each note's url / doi
+*.pdf
+vault/Attachments/*
+!vault/Attachments/.gitkeep
+vault/Inbox/*
+!vault/Inbox/.gitkeep
+
+# secrets
+.env
+.env.*
+
+# python
+__pycache__/
+*.pyc
+.venv/
+
+# obsidian per-device state
+vault/.obsidian/workspace*.json
+vault/.obsidian/cache
+vault/.trash/
+
+# os / editors
+.DS_Store
+.idea/
+.vscode/
+
+# local claude settings
+.claude/settings.local.json

@@ -1,0 +1,67 @@
+filters:
+  or:
+    - file.inFolder("Sources")
+    - file.inFolder("Concepts")
+    - file.inFolder("Entities")
+    - file.inFolder("Syntheses")
+properties:
+  citation_count:
+    displayName: Citations
+views:
+  - type: table
+    name: Sources by domain
+    filters:
+      and:
+        - file.inFolder("Sources")
+    groupBy:
+      property: domain
+      direction: ASC
+    order:
+      - file.name
+      - title
+      - type
+      - year
+      - status
+      - citation_count
+  - type: table
+    name: Drafts to review
+    filters:
+      and:
+        - 'status == "draft"'
+    order:
+      - file.name
+      - type
+      - domain
+      - file.mtime
+  - type: table
+    name: Concepts
+    filters:
+      and:
+        - file.inFolder("Concepts")
+    order:
+      - file.name
+      - domain
+      - status
+  - type: table
+    name: Entities
+    filters:
+      and:
+        - file.inFolder("Entities")
+    groupBy:
+      property: type
+      direction: ASC
+    order:
+      - file.name
+      - title
+      - type
+      - status
+  - type: table
+    name: Syntheses
+    filters:
+      and:
+        - file.inFolder("Syntheses")
+    order:
+      - file.name
+      - title
+      - date_range
+      - status

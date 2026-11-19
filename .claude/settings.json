@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 scripts/vault_tool.py:*)",
+      "Bash(python3 scripts/fetch_source.py:*)",
+      "Bash(python3 scripts/lookup_metadata.py:*)",
+      "Bash(python3 -m unittest discover -s tests)"
+    ]
+  }
+}
