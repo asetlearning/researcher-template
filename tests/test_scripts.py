@@ -10,7 +10,10 @@ import io
 import sys
 import tempfile
 import textwrap
+import os
+import shutil
 import unittest
+from unittest import mock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
@@ -278,6 +281,38 @@ class IdTests(unittest.TestCase):
         self.assertIn("Para & more", text)
         self.assertIn("- a", text)
         self.assertNotIn("x()", text)
+
+
+class FetchNameTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp)
+
+    def run_main(self, argv):
+        out, err = io.StringIO(), io.StringIO()
+        with mock.patch.dict(os.environ, {"RESEARCH_VAULT": str(self.tmp / "vault")}), \
+                contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = fetch_source.main(argv)
+        return code, out.getvalue(), err.getvalue()
+
+    def test_name_saves_pdf_and_text(self):
+        fake = {"method": "local-pdf", "text": "body", "title": "T", "pdf": b"%PDF-1.4 x"}
+        with mock.patch.object(fetch_source, "fetch", return_value=(fake, "slug")):
+            code, out, _ = self.run_main(["x.pdf", "--name", "smith-2024-test",
+                                          "--out", str(self.tmp / "text.md")])
+        self.assertEqual(code, 0)
+        pdf = self.tmp / "vault" / "Attachments" / "papers" / "smith-2024-test.pdf"
+        self.assertEqual(pdf.read_bytes(), b"%PDF-1.4 x")
+        self.assertIn('"pdf": ', out)
+        self.assertIn("body", (self.tmp / "text.md").read_text())
+
+    def test_bad_id_rejected_before_fetch(self):
+        for flag in ("--name", "--snapshot"):
+            with mock.patch.object(fetch_source, "fetch") as fetch:
+                code, _, err = self.run_main(["x", flag, "Bad_Id"])
+            self.assertEqual(code, 2)
+            self.assertIn("kebab-case", err)
+            fetch.assert_not_called()
 
 
 if __name__ == "__main__":

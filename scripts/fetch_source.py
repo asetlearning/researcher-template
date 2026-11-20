@@ -5,6 +5,10 @@ Accepts a URL, an arXiv id (2410.12345, arXiv:2410.12345v2), or a local file
 (.pdf, .html, .md, .txt). Saves the text to .cache/sources/<slug>.md (or
 --out) and prints a JSON summary: {source, method, path, chars, title}.
 
+--name <source-id> names outputs after the vault note: text to
+.cache/sources/<source-id>.md and, for PDF sources, the PDF to
+vault/Attachments/papers/<source-id>.pdf (local, uncommitted).
+
 --snapshot <source-id> saves instead to vault/Attachments/snapshots/<source-id>-snapshot.md:
 a local, uncommitted copy that keeps web content re-checkable after it changes.
 
@@ -178,7 +182,7 @@ def fetch_arxiv(aid: str) -> dict:
     try:
         data, _ = http_get(f"https://arxiv.org/pdf/{aid}")
         text = pdf_bytes_to_text(data)
-        return {"method": "arxiv-pdf", "text": text, "title": first_line_title(text)}
+        return {"method": "arxiv-pdf", "text": text, "title": first_line_title(text), "pdf": data}
     except FetchError as pdf_err:
         raw, _ = http_get(f"https://arxiv.org/abs/{aid}")
         title, text = html_to_text(raw.decode("utf-8", errors="replace"))
@@ -197,7 +201,7 @@ def fetch_url(url: str) -> dict:
     data, ctype = http_get(url)
     if "pdf" in ctype.lower() or data[:5] == b"%PDF-":
         text = pdf_bytes_to_text(data)
-        return {"method": "http-pdf", "text": text, "title": first_line_title(text)}
+        return {"method": "http-pdf", "text": text, "title": first_line_title(text), "pdf": data}
     charset = re.search(r"charset=([\w-]+)", ctype)
     raw = data.decode(charset.group(1) if charset else "utf-8", errors="replace")
     if "html" in ctype.lower() or raw.lstrip()[:1] == "<":
@@ -212,7 +216,8 @@ def fetch_local(path: Path) -> dict:
     suffix = path.suffix.lower()
     if suffix == ".pdf":
         text = pdf_to_text(path)
-        return {"method": "local-pdf", "text": text, "title": first_line_title(text)}
+        return {"method": "local-pdf", "text": text, "title": first_line_title(text),
+                "pdf": path.read_bytes()}
     raw = path.read_text(encoding="utf-8", errors="replace")
     if suffix in (".html", ".htm"):
         title, text = html_to_text(raw)
@@ -300,9 +305,20 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("source", help="URL, arXiv id, or local file")
     ap.add_argument("--out", help="output file (default: .cache/sources/<slug>.md)")
     ap.add_argument("--stdout", action="store_true", help="print the text instead of saving it")
+    ap.add_argument("--name", metavar="SOURCE_ID",
+                    help="name outputs after the note: text to .cache/sources/<SOURCE_ID>.md and, "
+                         "for PDF sources, the PDF to vault/Attachments/papers/<SOURCE_ID>.pdf "
+                         "(local, uncommitted)")
     ap.add_argument("--snapshot", metavar="SOURCE_ID",
                     help="save to vault/Attachments/snapshots/<SOURCE_ID>-snapshot.md (local, uncommitted)")
     args = ap.parse_args(argv)
+
+    # Validate ids before fetching, so a typo doesn't cost a download.
+    for flag in ("name", "snapshot"):
+        val = getattr(args, flag)
+        if val and not re.fullmatch(r"[a-z0-9][a-z0-9.\-]*", val):
+            print(json.dumps({"error": f"--{flag} needs a kebab-case source id"}), file=sys.stderr)
+            return 2
 
     try:
         result, slug = fetch(args.source)
@@ -311,24 +327,27 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     text = result["text"]
+    vault = Path(os.environ.get("RESEARCH_VAULT") or REPO_ROOT / "vault").expanduser()
+    pdf_path = None
+    if args.name and result.get("pdf"):
+        pdf_path = vault / "Attachments" / "papers" / f"{args.name}.pdf"
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
+        pdf_path.write_bytes(result["pdf"])
     if args.stdout:
         print(text)
         return 0
     if args.snapshot:
-        if not re.fullmatch(r"[a-z0-9][a-z0-9.\-]*", args.snapshot):
-            print(json.dumps({"error": "--snapshot needs a kebab-case source id"}), file=sys.stderr)
-            return 2
-        vault = Path(os.environ.get("RESEARCH_VAULT") or REPO_ROOT / "vault").expanduser()
         out = vault / "Attachments" / "snapshots" / f"{args.snapshot}-snapshot.md"
     else:
-        out = Path(args.out) if args.out else CACHE_DIR / f"{slug}.md"
+        out = Path(args.out) if args.out else CACHE_DIR / f"{args.name or slug}.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     header = (f"<!-- source: {args.source} | method: {result['method']} | "
               f"fetched: {dt.date.today().isoformat()} -->\n\n")
     out.write_text(header + text + "\n", encoding="utf-8")
     print(json.dumps({"source": args.source, "method": result["method"], "path": str(out),
                       "chars": len(text), "lines": text.count("\n") + 1,
-                      "title": result["title"]}, ensure_ascii=False))
+                      "title": result["title"],
+                      **({"pdf": str(pdf_path)} if pdf_path else {})}, ensure_ascii=False))
     return 0
 
 

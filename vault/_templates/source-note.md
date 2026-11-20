@@ -1,5 +1,6 @@
 ---
 title: <title in English>
+aliases: []                      # papers: - <System name as written> and - "<arXiv id>"
 type: <paper | preprint | article | book | chapter | thesis | web | blog | video | podcast | talk | dataset | repo | report | doc>
 authors: []                      # people or organisation, as credited
 year: <YYYY>

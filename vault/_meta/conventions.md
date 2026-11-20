@@ -59,9 +59,19 @@ vault/
 1. **Lowercase kebab-case**, globally unique **without folder context**: Obsidian
    resolves `[[name]]` by filename alone.
 2. Source ids:
-   - Papers / books: `<first-author>-<year>` or `<first-author>-<coauthor>-<year>`;
-     add a slug word on collision (`smith-2021-attention`).
-   - Preprints without a stable venue: `arxiv-<id>` (e.g. `arxiv-2410.12345`).
+   - Papers, preprints, books: `<first-author>-<year>-<slug>`, slug always
+     present (`rasmussen-2025-zep`, `hwang-2026-tool-graph-memory`). Never name a
+     note by arXiv id or DOI: a name must be recognizable without opening the note.
+     - `<first-author>`: family name, ASCII lowercase (`Gutiérrez` → `gutierrez`).
+     - `<year>`: year of the version the note describes (preprint year until a venue
+       version is ingested; renaming is not needed when it is later published).
+     - `<slug>`: the system/method name if the paper has one (`zep`, `hypermem`;
+       `A-Mem` → `amem`), else 1–3 distinctive title words. Letters and digits only.
+     - `aliases:` lists the system name as written (`Zep`, `A-Mem`) and the arXiv id
+       (`2501.13956`), so `[[Zep]]` and `vault_tool.py find 2501.13956` both resolve.
+   - Downloaded paper PDFs: `Attachments/papers/<source-id>.pdf` (local, git-ignored),
+     linked as `attachment: "[[<source-id>.pdf]]"`. `fetch_source.py <src> --name
+     <source-id>` saves it there and the text to `.cache/sources/<source-id>.md`.
    - Web pages, blogs, docs: `<site>-<slug>` (`distill-feature-visualization`).
    - Videos / talks / podcasts: `<speaker-or-channel>-<year>-<slug>`.
 3. Never use generic names alone: `paper`, `note`, `notes`, `summary`,

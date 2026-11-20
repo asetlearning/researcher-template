@@ -20,8 +20,8 @@ For 2+ sources or the contents of `vault/Inbox/`. The per-source check-in
    say* bullet per source.
 6. **Synthesis?** If the batch answers one question, offer to run the
    `synthesize` skill on it.
-7. **Inbox cleanup.** Move ingested Inbox PDFs to `Attachments/` and link them
-   from the note (`attachment: "[[file.pdf]]"`). PDFs are not committed, so make
+7. **Inbox cleanup.** Move ingested Inbox PDFs to `Attachments/papers/<source-id>.pdf`
+   (renamed after the note) and link them (`attachment: "[[<source-id>.pdf]]"`). PDFs are not committed, so make
    sure the note's `url` / `doi` / `arxiv` can recover the file. Clipped web pages
    (Markdown from Obsidian Web Clipper) become the note's snapshot: move them to
    `Attachments/snapshots/<source-id>-snapshot.md`. Remove processed URLs from link

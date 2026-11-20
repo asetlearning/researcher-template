@@ -22,8 +22,12 @@ linking, content discipline) are in `vault/_meta/conventions.md`; read it and
 1. **Identify.** Echo the source back. Ambiguous ("that attention paper") → ask.
 2. **Dedupe.** `python3 scripts/vault_tool.py find <arxiv-id|doi|url|title words>`.
    A hit → ask: update the existing note or skip.
-3. **Fetch.** `python3 scripts/fetch_source.py <source>` → read the saved file
-   (in chunks if long). Changeable web content (`web`, `blog`, `doc`): add
+3. **Fetch.** Papers: settle the source id first (`<first-author>-<year>-<slug>`,
+   conventions § Naming; `lookup_metadata.py` gives author and year), then
+   `python3 scripts/fetch_source.py <source> --name <source-id>`: the PDF lands in
+   `Attachments/papers/<source-id>.pdf` (set `attachment:`), the text in
+   `.cache/sources/<source-id>.md`. Other sources: `fetch_source.py <source>`.
+   Read the saved file (in chunks if long). Changeable web content (`web`, `blog`, `doc`): add
    `--snapshot <source-id>` and set `snapshot:` in the note. Videos/podcasts come
    back as captions with `[hh:mm:ss]` markers; cite those. Fetch fails or is empty →
    `WebFetch`; still nothing → stop and ask for another copy. Never summarize an
@@ -52,8 +56,9 @@ linking, content discipline) are in `vault/_meta/conventions.md`; read it and
    - `cites` / `cited_by` / `extends` / `supports` / `contradicts`: grep and
      `search` the vault for the source's references and for notes citing it. Add the
      reciprocal links on the targets in the same pass.
-9. **Place and name.** Path `Sources/<Domain folder>/<source-id>.md`; check the
-   stem is unique with `find`. Look at sibling notes: if their topics differ
+9. **Place and name.** Path `Sources/<Domain folder>/<source-id>.md`, papers named
+   `<first-author>-<year>-<slug>` with the system name and arXiv id in `aliases`
+   (never `arxiv-<id>`); check the stem is unique with `find`. Look at sibling notes: if their topics differ
    wildly, the folder is wrong.
 10. **Write**, then `python3 scripts/vault_tool.py lint <path>` plus each hub you
     touched, and fix every error. Fewer than 3 related links → find real

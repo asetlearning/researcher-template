@@ -38,7 +38,8 @@ Each workflow lives in a skill; follow the matching one step by step:
 ## Toolbelt
 
 - `python3 scripts/fetch_source.py <url|arxiv-id|path>` saves clean text to
-  `.cache/sources/` and prints the path (`--snapshot <source-id>` keeps a local copy
+  `.cache/sources/` and prints the path (`--name <source-id>` names the text after
+  the note and keeps paper PDFs in `Attachments/papers/`; `--snapshot <source-id>` keeps a local copy
   in the vault for changeable web content; video URLs give timestamped captions via
   yt-dlp). Read long sources in chunks. `WebFetch` is the fallback.
 - `python3 scripts/lookup_metadata.py <arxiv-id|doi|url>` (or `--title "…"`)
